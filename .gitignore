@@ -1,0 +1,96 @@
+# =========================
+# OS / IDE
+# =========================
+.DS_Store
+Thumbs.db
+
+.idea/
+.vscode/
+*.iml
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+.venv/
+venv/
+env/
+
+pip-wheel-metadata/
+
+.pytest_cache/
+.mypy_cache/
+
+# =========================
+# Java / Maven / Gradle
+# =========================
+target/
+build/
+.gradle/
+
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven wrapper logs
+.mvn/wrapper/maven-wrapper.jar
+
+# =========================
+# Flink
+# =========================
+flink-checkpoints/
+flink-savepoints/
+
+# =========================
+# Kafka
+# =========================
+kafka-logs/
+
+# =========================
+# Docker
+# =========================
+*.log
+docker-data/
+
+# =========================
+# MongoDB
+# =========================
+mongo-data/
+
+# =========================
+# Environment / secrets
+# =========================
+.env
+.env.*
+*.secret
+secrets/
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+*.tmp
+
+# =========================
+# Node.js (jeśli dashboard/frontend)
+# =========================
+node_modules/
+dist/
+coverage/
+
+# =========================
+# Streamlit
+# =========================
+.streamlit/secrets.toml
+
+# =========================
+# Mac/Linux
+# =========================
+*.swp
+*.swo
