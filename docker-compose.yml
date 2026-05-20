@@ -34,6 +34,30 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local-kafka
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
+  
+  kafka-init:
+    image: apache/kafka:4.1.2
+    container_name: kafka-init
+    depends_on:
+      - kafka
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      "
+      echo 'Waiting for Kafka...' &&
+      until /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --list; do
+        sleep 2;
+      done &&
+
+      echo 'Creating topic transactions...' &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --create --if-not-exists --topic transactions --partitions 1 --replication-factor 1 &&
+
+      echo 'Creating topic alerts...' &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --create --if-not-exists --topic alerts --partitions 1 --replication-factor 1 &&
+
+      echo 'Kafka topics created.' &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --list
+      "
+    restart: "no"
 
   flink-jobmanager:
     image: flink:1.20.1-scala_2.12-java17

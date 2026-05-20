@@ -1,3 +1,4 @@
 streamlit==1.40.1
 confluent-kafka==2.6.1
 pandas==2.2.3
+pymongo==4.10.1
