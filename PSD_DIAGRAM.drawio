@@ -1,0 +1,43 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Strona-1" id="kDb5SQbDQR0MKSKo43sp">
+    <mxGraphModel dx="723" dy="395" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-3" edge="1" parent="1" source="r6RXGboWoLzXpyjHD2vI-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="r6RXGboWoLzXpyjHD2vI-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Symulator transakcji" vertex="1">
+          <mxGeometry height="60" width="120" x="80" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-5" edge="1" parent="1" source="r6RXGboWoLzXpyjHD2vI-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="r6RXGboWoLzXpyjHD2vI-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Kafka topic: transactions" vertex="1">
+          <mxGeometry height="60" width="120" x="270" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-11" edge="1" parent="1" source="r6RXGboWoLzXpyjHD2vI-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="r6RXGboWoLzXpyjHD2vI-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Apache Flink - detektor anomalii" vertex="1">
+          <mxGeometry height="60" width="120" x="460" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-9" edge="1" parent="1" source="r6RXGboWoLzXpyjHD2vI-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="r6RXGboWoLzXpyjHD2vI-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Aplikacja alarmów/&lt;br&gt;Wizualizacja" vertex="1">
+          <mxGeometry height="60" width="120" x="280" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="MongoDB" vertex="1">
+          <mxGeometry height="60" width="120" x="80" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-12" edge="1" parent="1" source="r6RXGboWoLzXpyjHD2vI-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="r6RXGboWoLzXpyjHD2vI-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r6RXGboWoLzXpyjHD2vI-10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Symulator transakcji" vertex="1">
+          <mxGeometry height="60" width="120" x="460" y="150" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

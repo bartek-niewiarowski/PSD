@@ -1,12 +1,389 @@
-# Uruchomienie:
-    1. docker compose up -d
-    
-    2. odpalenie wszystkich apek w python: symulator, consumer i wizualizacja alertów.
+# System wykrywania anomalii w transakcjach kart płatniczych
 
-# Adresy
+## Autorzy
+
+* Bartłomiej Niewiarowski
+* Krzysztof Fijałkowski
+* Rok akademicki: 2025/2026
+
+---
+
+# 1. Cel projektu
+
+Celem projektu było opracowanie systemu służącego do wykrywania anomalii w transakcjach realizowanych za pomocą kart płatniczych.
+
+System został zaprojektowany w architekturze przetwarzania strumieniowego (stream processing) z wykorzystaniem:
+
+* Apache Kafka
+* Apache Flink
+* MongoDB
+* aplikacji wizualizacyjnej
+* generatora danych symulujących rzeczywiste transakcje
+
+Projekt umożliwia:
+
+* generowanie transakcji dla 10 000 kart płatniczych,
+* wykrywanie anomalii w czasie prawie rzeczywistym,
+* analizę danych transakcyjnych,
+* wizualizację alarmów i statystyk,
+* przechowywanie danych historycznych.
+
+---
+
+# 2. Założenia projektu
+
+Projekt został wykonany zgodnie z założeniami:
+
+## 2.1 Generowanie danych
+
+Symulator transakcji generuje dane dla 10 000 różnych kart płatniczych.
+
+Każda transakcja zawiera:
+
+* ID karty,
+* ID użytkownika,
+* lokalizację GPS,
+* wartość transakcji,
+* dostępny limit karty,
+* czas wykonania transakcji,
+* informację o wygenerowanej anomalii.
+
+Dane są przesyłane w formacie JSON.
+
+## 2.2 Wykrywanie anomalii
+
+Detektor anomalii analizuje dane w trybie prawie rzeczywistym.
+
+W systemie zaimplementowano między innymi następujące typy anomalii:
+
+* przekroczenie limitu karty,
+* nietypowo wysoka wartość transakcji,
+* nagła zmiana lokalizacji,
+* statystycznie nietypowa transakcja,
+* zbyt duża częstotliwość transakcji.
+
+Detekcja opiera się na metodach statystycznych:
+
+* średniej wartości transakcji,
+* wariancji,
+* odchyleniu standardowym,
+* z-score.
+
+## 2.3 Pamięć tymczasowa
+
+Apache Flink wykorzystuje mechanizm state management.
+
+Przechowywane są między innymi:
+
+* średnia wartość transakcji dla karty,
+* liczba wcześniejszych transakcji,
+* historia lokalizacji,
+* liczba transakcji w krótkim czasie.
+
+---
+
+# 3. Architektura rozwiązania
+
+## 3.1 Schemat działania aplikacji
+![Schemat architektury](./PSD_DIAGRAM.png)
+
+---
+
+# 4. Opis komponentów systemu
+
+## 4.1 Symulator transakcji
+
+Symulator transakcji odpowiada za generowanie danych wejściowych.
+
+Aplikacja:
+
+* generuje transakcje dla 10 000 kart,
+* tworzy realistyczne dane finansowe,
+* generuje anomalie,
+* wysyła dane do Apache Kafka.
+
+Każda wiadomość jest przesyłana do topiku `transactions`.
+
+Przykładowa wiadomość:
+
+```json
+{
+  "transaction_id": "8d2c9f3a-3c5a-4b8e-a8e2-7d2f2a1c5b11",
+  "timestamp": "2026-05-21T12:00:00Z",
+  "card_id": "card-000154",
+  "user_id": "user-000021",
+  "location": {
+    "latitude": 52.2297,
+    "longitude": 21.0122
+  },
+  "amount": 250.50,
+  "available_limit": 5000.00,
+  "currency": "PLN",
+  "is_anomaly": false,
+  "anomaly_type": null
+}
+```
+
+---
+
+## 4.2 Apache Kafka
+
+Apache Kafka pełni funkcję brokera wiadomości.
+
+W projekcie wykorzystywane są dwa podstawowe topiki:
+
+| Topik        | Opis                                  |
+| ------------ | ------------------------------------- |
+| transactions | transakcje generowane przez symulator |
+| alerts       | alarmy wygenerowane przez Flink       |
+
+Kafka umożliwia:
+
+* przetwarzanie strumieniowe,
+* niezależność komponentów,
+* skalowalność rozwiązania,
+* przesyłanie danych w czasie rzeczywistym.
+
+---
+
+## 4.3 Testowy konsument Kafka
+
+Testowy konsument służy do analizy poprawności generowanych danych.
+
+Aplikacja umożliwia:
+
+* podgląd danych z topiku `transactions`,
+* sprawdzenie poprawności JSON,
+* analizę danych wejściowych,
+* podstawową wizualizację transakcji.
+
+Komponent był wykorzystywany podczas testowania poprawności działania symulatora.
+
+---
+
+## 4.4 Apache Flink — detektor anomalii
+
+Detektor anomalii jest najważniejszym komponentem systemu.
+
+Aplikacja:
+
+* odczytuje dane z Apache Kafka,
+* analizuje transakcje,
+* wykorzystuje algorytmy statystyczne,
+* wykrywa anomalie,
+* generuje alarmy.
+
+### Wykorzystywane mechanizmy
+
+Detektor wykorzystuje:
+
+* średnią wartość transakcji,
+* wariancję,
+* odchylenie standardowe,
+* z-score,
+* analizę lokalizacji,
+* analizę częstotliwości.
+
+### Przykładowe anomalie
+
+#### LIMIT_EXCEEDED
+
+Transakcja przekracza dostępny limit karty.
+
+#### STATISTICAL_AMOUNT_ANOMALY
+
+Kwota transakcji znacząco odbiega od typowego zachowania użytkownika.
+
+#### NEW_LOCATION
+
+Transakcja została wykonana z nowej lokalizacji.
+
+#### HIGH_FREQUENCY
+
+Zbyt duża liczba transakcji w krótkim czasie.
+
+### State Management
+
+Apache Flink wykorzystuje stan do przechowywania:
+
+* liczby transakcji,
+* średniej kwoty,
+* historii lokalizacji,
+* statystyk użytkownika.
+
+Dzięki temu możliwe jest wykrywanie nietypowych zachowań dla konkretnej karty.
+
+---
+
+## 4.5 Aplikacja wizualizacyjna
+
+Aplikacja wizualizacyjna odpowiada za prezentację alarmów.
+
+Możliwości aplikacji:
+
+* wyświetlanie alarmów,
+* filtrowanie alarmów,
+* analiza statystyk,
+* prezentacja wykresów,
+* analiza danych historycznych.
+
+Wyświetlane informacje:
+
+* ID transakcji,
+* ID użytkownika,
+* typ anomalii,
+* lokalizacja,
+* kwota,
+* czas alarmu.
+
+---
+
+## 4.6 MongoDB
+
+MongoDB służy do przechowywania:
+
+* wykrytych alarmów,
+* danych historycznych,
+* statystyk transakcji.
+
+Baza danych umożliwia:
+
+* późniejszą analizę,
+* filtrowanie danych,
+* przechowywanie historii alarmów.
+
+---
+
+# 5. Uruchomienie systemu
+
+## 5.1 Wymagania
+
+Do uruchomienia projektu wymagane są:
+
+* Docker,
+* Docker Compose,
+* Java 17+,
+* Maven,
+* Python 3.
+
+---
+
+# 5.2 Budowanie aplikacji Java
+
+W katalogu projektu należy wykonać:
+
+```bash
+mvn clean package
+```
+
+Po zakończeniu budowania plik `.jar` pojawi się w katalogu:
+
+```text
+target/
+```
+
+---
+
+# 5.3 Uruchomienie środowiska Docker
+
+Uruchomienie wszystkich komponentów:
+
+```bash
+docker compose up -d
+```
+
+Sprawdzenie statusu kontenerów:
+
+```bash
+docker ps
+```
+
+Zatrzymanie środowiska:
+
+```bash
+docker compose down
+```
+
+## 5.3.1 Adresy komponentów
 
 Kafka:            localhost:9092
 Kafka UI:         http://localhost:8080
 Flink Dashboard:  http://localhost:8081
 MongoDB:          mongodb://admin:admin123@localhost:27017
 Mongo Express:    http://localhost:8082
+
+---
+
+# 5.4 Uruchomienie symulatora transakcji
+
+Przykładowe uruchomienie:
+
+```bash
+python ./simulator/app.py
+```
+
+Symulator zaczyna wysyłać dane do topiku Kafka `transactions`.
+
+---
+
+# 5.5 Uruchomienie aplikacji wizualizacyjnej
+
+Przykład uruchomienia aplikacji Streamlit:
+
+```bash
+streamlit run ./alert-app/app.py
+```
+
+Domyślnie aplikacja będzie dostępna pod adresem:
+
+```text
+http://localhost:8501
+```
+
+---
+
+# 6. Przykładowe alarmy
+
+## Alarm przekroczenia limitu
+
+```json
+{
+  "anomaly_type": "LIMIT_EXCEEDED",
+  "reason": "Transaction amount exceeds available limit"
+}
+```
+
+## Alarm nietypowej wartości transakcji
+
+```json
+{
+  "anomaly_type": "STATISTICAL_AMOUNT_ANOMALY",
+  "reason": "Transaction amount significantly differs from historical average"
+}
+```
+
+## Alarm nowej lokalizacji
+
+```json
+{
+  "anomaly_type": "NEW_LOCATION",
+  "reason": "Transaction from previously unseen location"
+}
+```
+
+---
+
+# 7. Podsumowanie
+
+W ramach projektu opracowano kompletny system wykrywania anomalii w transakcjach kart płatniczych.
+
+System umożliwia:
+
+* generowanie realistycznych danych,
+* przetwarzanie strumieniowe,
+* wykrywanie anomalii w czasie prawie rzeczywistym,
+* analizę statystyczną,
+* wizualizację alarmów,
+* przechowywanie danych historycznych.
+
+Projekt spełnia wymagania zadania i wykorzystuje nowoczesne technologie przetwarzania danych strumieniowych.
