@@ -109,9 +109,14 @@ services:
       context: ./flink-detector
     container_name: flink-detector
     depends_on:
-      - kafka
-      - flink-jobmanager
-      - flink-taskmanager
+      kafka-init:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_started
+      flink-jobmanager:
+        condition: service_started
+      flink-taskmanager:
+        condition: service_started
     restart: "no"
 
   alert-app:
