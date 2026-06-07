@@ -18,3 +18,8 @@ package = false
 testpaths = ["e2e"]
 pythonpath = ["e2e"]
 addopts = "-ra"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]

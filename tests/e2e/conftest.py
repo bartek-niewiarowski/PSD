@@ -24,7 +24,7 @@ KAFKA_BOOTSTRAP_SERVERS = os.environ.get("E2E_KAFKA_BOOTSTRAP", "localhost:9092"
 FLINK_REST_URL = os.environ.get("E2E_FLINK_REST", "http://localhost:8081")
 EXPECTED_FLINK_JOB = "Card Transaction Statistical Anomaly Detector"
 
-SKIP_DOCKER = os.environ.get("E2E_SKIP_DOCKER", "0") == "1"
+SKIP_DOCKER = True
 
 
 def _compose(*args: str) -> None:
