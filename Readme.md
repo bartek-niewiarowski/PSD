@@ -179,28 +179,43 @@ Detektor wykorzystuje:
 * wariancję,
 * odchylenie standardowe,
 * z-score,
-* analizę lokalizacji,
-* analizę częstotliwości.
+* analizę lokalizacji.
 
 ### Przykładowe anomalie
 
 #### LIMIT_EXCEEDED
 
-Transakcja przekracza dostępny limit karty.
+Alert występuje, gdy:
+
+* `amount > available_limit`.
+
+Reguła działa od pierwszej transakcji (nie wymaga historii).
 
 #### STATISTICAL_AMOUNT_ANOMALY
 
-Kwota transakcji znacząco odbiega od typowego zachowania użytkownika.
+Alert występuje, gdy jednocześnie spełnione są warunki:
+
+* system ma historię co najmniej `5` wcześniejszych transakcji dla danej karty (`count >= 5`),
+* odchylenie standardowe jest większe od zera (`stddev > 0`),
+* wartość bezwzględna z-score przekracza próg `3.0`:
+  `abs((amount - mean) / stddev) > 3.0`.
 
 #### NEW_LOCATION
 
-Transakcja została wykonana z nowej lokalizacji.
+Alert występuje, gdy:
 
-#### HIGH_FREQUENCY
+* system ma historię co najmniej `5` wcześniejszych transakcji dla danej karty (`count >= 5`),
+* bieżąca lokalizacja nie była wcześniej widziana dla tej karty.
 
-Zbyt duża liczba transakcji w krótkim czasie.
+Lokalizacja jest normalizowana do współrzędnych zaokrąglonych do dwóch miejsc
+po przecinku (`lat,lon`), żeby drobne wahania GPS nie tworzyły fałszywych nowych
+lokalizacji.
 
-> Uwaga: `HIGH_FREQUENCY` jest opisane jako możliwe rozszerzenie systemu, ale aktualna implementacja `AnomalyDetectorJob` generuje trzy typy alertów: `LIMIT_EXCEEDED`, `STATISTICAL_AMOUNT_ANOMALY`, `NEW_LOCATION`.
+> Uwaga: aktualna implementacja `AnomalyDetectorJob` generuje trzy typy alertów:
+> `LIMIT_EXCEEDED`, `STATISTICAL_AMOUNT_ANOMALY`, `NEW_LOCATION`.
+>
+> Jeśli warunki kilku alertów są spełnione jednocześnie, finalnie zwracany jest
+> jeden alert z priorytetem `NEW_LOCATION`.
 
 ### State Management
 
@@ -432,3 +447,6 @@ System umożliwia:
 * przechowywanie danych historycznych.
 
 Projekt spełnia wymagania zadania i wykorzystuje nowoczesne technologie przetwarzania danych strumieniowych.
+
+# 8. Link do demo
+https://drive.google.com/file/d/1GBcvcP2kurKY2JwGBLP3mM4bLQFcMgYN/view?usp=sharing
