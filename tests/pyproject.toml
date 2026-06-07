@@ -1,0 +1,20 @@
+[project]
+name = "tests"
+version = "0.1.0"
+description = "End-to-end tests for the card transaction anomaly detection pipeline"
+requires-python = ">=3.9"
+dependencies = [
+    "pytest==8.3.4",
+    "pytest-timeout==2.3.1",
+    "confluent-kafka==2.6.1",
+    "pymongo==4.10.1",
+    "requests==2.32.3",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["e2e"]
+pythonpath = ["e2e"]
+addopts = "-ra"

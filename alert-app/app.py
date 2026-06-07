@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from datetime import datetime
 
@@ -7,13 +8,13 @@ import streamlit as st
 from confluent_kafka import Consumer, KafkaException
 from pymongo import DESCENDING, MongoClient
 
-KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
-KAFKA_TOPIC = "alerts"
-KAFKA_GROUP_ID = "alert-dashboard-consumer"
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "alerts")
+KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID", "alert-dashboard-consumer")
 
-MONGO_URI = "mongodb://admin:admin123@localhost:27017"
-MONGO_DB = "anomaly_detection"
-MONGO_COLLECTION = "alerts"
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:admin123@localhost:27017")
+MONGO_DB = os.getenv("MONGO_DB", "anomaly_detection")
+MONGO_COLLECTION = os.getenv("MONGO_COLLECTION", "alerts")
 
 
 st.set_page_config(

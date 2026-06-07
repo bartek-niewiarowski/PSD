@@ -1,0 +1,11 @@
+[project]
+name = "consumer"
+version = "0.1.0"
+description = "Kafka consumer used for transaction inspection"
+requires-python = ">=3.9"
+dependencies = [
+    "confluent-kafka==2.6.1",
+]
+
+[tool.uv]
+package = false
