@@ -450,3 +450,31 @@ Projekt spełnia wymagania zadania i wykorzystuje nowoczesne technologie przetwa
 
 # 8. Link do demo
 https://drive.google.com/file/d/1GBcvcP2kurKY2JwGBLP3mM4bLQFcMgYN/view?usp=sharing
+
+# 9. Testy end-to-end
+
+W projekcie przygotowano testy end-to-end (katalog `tests/e2e/`), które na uruchomionym stacku Docker Compose wysyłają transakcje do Kafki, weryfikują generowanie alertów przez Flinka (przekroczenie limitu, anomalia kwotowa, nowa lokalizacja) oraz zapis alertów w MongoDB.
+
+Aby je uruchomić należy:
+- uruchomić całą aplikację
+- wejść do folderu test
+- uruchomić testy komendą `uv run pytest e2e -v`
+
+wynik jest następujący:
+```bash
+tests git:(main) uv run pytest e2e -v           
+========================================================== test session starts ===========================================================
+platform linux -- Python 3.9.22, pytest-8.3.4, pluggy-1.6.0 -- /home/gambolkf/studia/mgr/psd_project/tests/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/gambolkf/studia/mgr/psd_project/tests
+configfile: pyproject.toml
+plugins: timeout-2.3.1
+collected 4 items                                                                                                                        
+
+e2e/test_mongo_persist.py::test_alert_persisted_to_mongo PASSED                                                                    [ 25%]
+e2e/test_pipeline.py::test_limit_exceeded_detected PASSED                                                                          [ 50%]
+e2e/test_pipeline.py::test_statistical_amount_anomaly_detected PASSED                                                              [ 75%]
+e2e/test_pipeline.py::test_new_location_detected PASSED                                                                            [100%]
+
+===================================================== 4 passed in 242.03s (0:04:02) ======================================================
+```
