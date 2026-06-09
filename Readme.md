@@ -58,9 +58,7 @@ W systemie zaimplementowano między innymi następujące typy anomalii:
 
 * przekroczenie limitu karty,
 * nietypowo wysoka wartość transakcji,
-* nagła zmiana lokalizacji,
-* statystycznie nietypowa transakcja,
-* zbyt duża częstotliwość transakcji.
+* nagła zmiana lokalizacji.
 
 Detekcja opiera się na metodach statystycznych:
 
@@ -181,26 +179,43 @@ Detektor wykorzystuje:
 * wariancję,
 * odchylenie standardowe,
 * z-score,
-* analizę lokalizacji,
-* analizę częstotliwości.
+* analizę lokalizacji.
 
 ### Przykładowe anomalie
 
 #### LIMIT_EXCEEDED
 
-Transakcja przekracza dostępny limit karty.
+Alert występuje, gdy:
+
+* `amount > available_limit`.
+
+Reguła działa od pierwszej transakcji (nie wymaga historii).
 
 #### STATISTICAL_AMOUNT_ANOMALY
 
-Kwota transakcji znacząco odbiega od typowego zachowania użytkownika.
+Alert występuje, gdy jednocześnie spełnione są warunki:
+
+* system ma historię co najmniej `5` wcześniejszych transakcji dla danej karty (`count >= 5`),
+* odchylenie standardowe jest większe od zera (`stddev > 0`),
+* wartość bezwzględna z-score przekracza próg `3.0`:
+  `abs((amount - mean) / stddev) > 3.0`.
 
 #### NEW_LOCATION
 
-Transakcja została wykonana z nowej lokalizacji.
+Alert występuje, gdy:
 
-#### HIGH_FREQUENCY
+* system ma historię co najmniej `5` wcześniejszych transakcji dla danej karty (`count >= 5`),
+* bieżąca lokalizacja nie była wcześniej widziana dla tej karty.
 
-Zbyt duża liczba transakcji w krótkim czasie.
+Lokalizacja jest normalizowana do współrzędnych zaokrąglonych do dwóch miejsc
+po przecinku (`lat,lon`), żeby drobne wahania GPS nie tworzyły fałszywych nowych
+lokalizacji.
+
+> Uwaga: aktualna implementacja `AnomalyDetectorJob` generuje trzy typy alertów:
+> `LIMIT_EXCEEDED`, `STATISTICAL_AMOUNT_ANOMALY`, `NEW_LOCATION`.
+>
+> Jeśli warunki kilku alertów są spełnione jednocześnie, finalnie zwracany jest
+> jeden alert z priorytetem `NEW_LOCATION`.
 
 ### State Management
 
@@ -264,7 +279,8 @@ Do uruchomienia projektu wymagane są:
 * Docker Compose,
 * Java 17+,
 * Maven,
-* Python 3.
+* uv (zarządzanie środowiskiem i zależnościami Python),
+* Python 3.9+ (automatycznie wykrywany przez uv).
 
 ---
 
@@ -273,7 +289,7 @@ Do uruchomienia projektu wymagane są:
 W katalogu projektu należy wykonać:
 
 ```bash
-mvn clean package
+cd flink-detector; mvn clean package
 ```
 
 Po zakończeniu budowania plik `.jar` pojawi się w katalogu:
@@ -307,34 +323,48 @@ docker compose down
 ## 5.3.1 Adresy komponentów
 
 Kafka:            localhost:9092
-Kafka UI:         http://localhost:8080
 Flink Dashboard:  http://localhost:8081
 MongoDB:          mongodb://admin:admin123@localhost:27017
-Mongo Express:    http://localhost:8082
+Alert Dashboard:  http://localhost:8501
 
 ---
 
-# 5.4 Uruchomienie symulatora transakcji
+## 5.3.2 Synchronizacja zależności Python (uv)
 
-Przykładowe uruchomienie:
+W osobnych terminalach lub sekwencyjnie wykonaj (dla komponentów uruchamianych lokalnie poza Docker Compose):
 
 ```bash
-python ./simulator/app.py
+cd simulator && uv sync
 ```
 
-Symulator zaczyna wysyłać dane do topiku Kafka `transactions`.
+```bash
+cd consumer && uv sync
+```
 
 ---
 
-# 5.5 Uruchomienie aplikacji wizualizacyjnej
 
-Przykład uruchomienia aplikacji Streamlit:
+# 5.4 Uruchomienie aplikacji wizualizacyjnej
+
+Domyślnie aplikacja Streamlit uruchamia się razem z całym środowiskiem przez Docker Compose:
 
 ```bash
-streamlit run ./alert-app/app.py
+docker compose up -d
 ```
 
-Domyślnie aplikacja będzie dostępna pod adresem:
+Dashboard będzie dostępny pod adresem:
+
+```text
+http://localhost:8501
+```
+
+Opcjonalnie, uruchomienie lokalne (poza kontenerem):
+
+```bash
+cd alert-app && uv run streamlit run app.py
+```
+
+W trybie lokalnym aplikacja również będzie dostępna pod adresem:
 
 ```text
 http://localhost:8501
@@ -342,9 +372,43 @@ http://localhost:8501
 
 ---
 
-# 6. Przykładowe alarmy
+# 5.5 Uruchomienie symulatora transakcji
 
-## Alarm przekroczenia limitu
+Przykładowe uruchomienie:
+
+```bash
+cd simulator && uv run python app.py
+```
+
+Symulator zaczyna wysyłać dane do topiku Kafka `transactions`.
+
+---
+
+## 5.6 Uruchomienie testowego konsumenta Kafka
+
+Przykładowe uruchomienie:
+
+```bash
+cd consumer && uv run python app.py
+```
+
+Konsument odczytuje wiadomości z topiku `transactions`.
+
+---
+
+
+
+# 6. Alerty w aktualnej implementacji
+
+Poniżej znajduje się komplet alertów generowanych przez aktualny kod detektora (`AnomalyDetectorJob`):
+
+| `anomaly_type` | Kiedy alert się uruchamia | Szczegół działania |
+| --- | --- | --- |
+| `LIMIT_EXCEEDED` | Gdy `amount > available_limit`. | Alert uruchamia się natychmiast dla pojedynczej transakcji, bez potrzeby historii. |
+| `STATISTICAL_AMOUNT_ANOMALY` | Gdy dla danej karty jest co najmniej 5 wcześniejszych transakcji (`count >= 5`) oraz `z-score > 3.0`. | Detektor liczy średnią i wariancję metodą Welforda (`mean`, `m2`), wyznacza odchylenie standardowe i porównuje odchylenie kwoty od profilu historycznego. |
+| `NEW_LOCATION` | Gdy dla danej karty jest co najmniej 5 wcześniejszych transakcji (`count >= 5`) i bieżąca lokalizacja nie była wcześniej obserwowana. | Klucz lokalizacji jest budowany jako zaokrąglone `lat,lon` do 2 miejsc po przecinku. W aktualnej kolejności reguł ten alert ma najwyższy priorytet i może nadpisać wykrycie kwotowe lub limitowe dla tej samej transakcji. |
+
+### Przykładowe payloady alertów
 
 ```json
 {
@@ -353,16 +417,12 @@ http://localhost:8501
 }
 ```
 
-## Alarm nietypowej wartości transakcji
-
 ```json
 {
   "anomaly_type": "STATISTICAL_AMOUNT_ANOMALY",
   "reason": "Transaction amount significantly differs from historical average"
 }
 ```
-
-## Alarm nowej lokalizacji
 
 ```json
 {
@@ -387,3 +447,6 @@ System umożliwia:
 * przechowywanie danych historycznych.
 
 Projekt spełnia wymagania zadania i wykorzystuje nowoczesne technologie przetwarzania danych strumieniowych.
+
+# 8. Link do demo
+https://drive.google.com/file/d/1GBcvcP2kurKY2JwGBLP3mM4bLQFcMgYN/view?usp=sharing

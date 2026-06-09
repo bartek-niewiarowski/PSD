@@ -27,6 +27,7 @@ public class AnomalyDetectorJob {
     private static final String KAFKA_BOOTSTRAP = "kafka:19092";
     private static final String INPUT_TOPIC = "transactions";
     private static final String OUTPUT_TOPIC = "alerts";
+    private static final long MIN_HISTORY_FOR_PROFILE_ALERTS = 5L;
 
     public static void main(String[] args) throws Exception {
 
@@ -62,7 +63,17 @@ public class AnomalyDetectorJob {
                 )
                 .keyBy(message -> {
                     JsonNode node = mapper.readTree(message);
-                    return node.path("card_id").asText("UNKNOWN");
+                    JsonNode cardIdNode = node.get("card_id");
+
+                    if (cardIdNode == null
+                            || cardIdNode.isNull()
+                            || cardIdNode.asText().isBlank()) {
+                        throw new IllegalArgumentException(
+                                "Missing required field: card_id"
+                        );
+                    }
+
+                    return cardIdNode.asText();
                 })
                 .process(new StatisticalAnomalyDetector())
                 .filter(value -> value != null && !value.isBlank())
@@ -138,8 +149,7 @@ public class AnomalyDetectorJob {
             double availableLimit =
                     transaction.path("available_limit").asDouble();
 
-            String location =
-                    transaction.path("location").asText("UNKNOWN");
+            String location = buildLocationKey(transaction.path("location"));
 
             Long count = countState.value();
             Double mean = meanState.value();
@@ -157,57 +167,16 @@ public class AnomalyDetectorJob {
                 m2 = 0.0;
             }
 
-            String anomalyType = null;
-            String reason = null;
-
-            /*
-             * 1. LIMIT EXCEEDED
-             */
-            if (amount > availableLimit) {
-
-                anomalyType = "LIMIT_EXCEEDED";
-
-                reason =
-                        "Transaction amount exceeds available limit";
-            }
-
-            /*
-             * 2. Statistical anomaly based on Z-Score
-             */
-            else if (count >= 5) {
-
-                double variance = m2 / (count - 1);
-                double stddev = Math.sqrt(variance);
-
-                if (stddev > 0) {
-
-                    double zScore =
-                            Math.abs((amount - mean) / stddev);
-
-                    if (zScore > 3.0) {
-
-                        anomalyType =
-                                "STATISTICAL_AMOUNT_ANOMALY";
-
-                        reason =
-                                "Transaction amount significantly differs from historical average";
-                    }
-                }
-            }
-
-            /*
-             * 3. New location anomaly
-             */
             boolean knownLocation =
                     locationCountsState.contains(location);
-
-            if (count >= 5 && !knownLocation) {
-
-                anomalyType = "NEW_LOCATION";
-
-                reason =
-                        "Transaction from previously unseen location";
-            }
+            AnomalyDecision decision = decideAnomaly(
+                    amount,
+                    availableLimit,
+                    count,
+                    mean,
+                    m2,
+                    knownLocation
+            );
 
             /*
              * Aktualizacja statystyk
@@ -222,7 +191,7 @@ public class AnomalyDetectorJob {
             /*
              * Generowanie alertu
              */
-            if (anomalyType != null) {
+            if (decision.isAnomaly()) {
 
                 ObjectNode alarm =
                         mapper.createObjectNode();
@@ -244,12 +213,12 @@ public class AnomalyDetectorJob {
 
                 alarm.put(
                         "anomaly_type",
-                        anomalyType
+                        decision.anomalyType
                 );
 
                 alarm.put(
                         "reason",
-                        reason
+                        decision.reason
                 );
 
                 alarm.put(
@@ -305,6 +274,29 @@ public class AnomalyDetectorJob {
         }
 
         /*
+         * Budowa stabilnego klucza lokalizacji.
+         * Pole "location" jest obiektem JSON {lat, lon}, więc asText() zwróciłby
+         * pusty string. Klucz budujemy z zaokrąglonych współrzędnych, aby drobne
+         * wahania GPS nie tworzyły nowej lokalizacji przy każdej transakcji.
+         */
+        private String buildLocationKey(JsonNode location) {
+
+            if (location == null || location.isMissingNode() || location.isNull()) {
+                return "UNKNOWN";
+            }
+
+            double lat = location.path("lat").asDouble();
+            double lon = location.path("lon").asDouble();
+
+            return String.format(
+                    java.util.Locale.US,
+                    "%.2f,%.2f",
+                    lat,
+                    lon
+            );
+        }
+
+        /*
          * Aktualizacja częstych lokalizacji
          */
         private void updateLocation(String location)
@@ -321,6 +313,66 @@ public class AnomalyDetectorJob {
                     location,
                     currentCount + 1
             );
+        }
+    }
+
+    static AnomalyDecision decideAnomaly(
+            double amount,
+            double availableLimit,
+            long count,
+            double mean,
+            double m2,
+            boolean knownLocation
+    ) {
+        String anomalyType = null;
+        String reason = null;
+
+        /*
+         * 1. LIMIT EXCEEDED
+         */
+        if (amount > availableLimit) {
+            anomalyType = "LIMIT_EXCEEDED";
+            reason = "Transaction amount exceeds available limit";
+        }
+        /*
+         * 2. Statistical anomaly based on Z-Score
+         */
+        else if (count >= MIN_HISTORY_FOR_PROFILE_ALERTS) {
+            double variance = m2 / (count - 1);
+            double stddev = Math.sqrt(variance);
+
+            if (stddev > 0) {
+                double zScore = Math.abs((amount - mean) / stddev);
+
+                if (zScore > 3.0) {
+                    anomalyType = "STATISTICAL_AMOUNT_ANOMALY";
+                    reason = "Transaction amount significantly differs from historical average";
+                }
+            }
+        }
+
+        /*
+         * 3. New location anomaly (overrides amount-profile anomalies)
+         */
+        if (count >= MIN_HISTORY_FOR_PROFILE_ALERTS && !knownLocation) {
+            anomalyType = "NEW_LOCATION";
+            reason = "Transaction from previously unseen location";
+        }
+
+        return new AnomalyDecision(anomalyType, reason);
+    }
+
+    static final class AnomalyDecision {
+        final String anomalyType;
+        final String reason;
+
+        AnomalyDecision(String anomalyType, String reason) {
+            this.anomalyType = anomalyType;
+            this.reason = reason;
+        }
+
+        boolean isAnomaly() {
+            return anomalyType != null;
         }
     }
 }

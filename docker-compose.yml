@@ -60,7 +60,7 @@ services:
     restart: "no"
 
   flink-jobmanager:
-    image: flink:1.20.1-scala_2.12-java17
+    image: flink:1.20.3-scala_2.12-java17
     container_name: flink-jobmanager
     ports:
       - "8081:8081"
@@ -69,7 +69,7 @@ services:
       JOB_MANAGER_RPC_ADDRESS: flink-jobmanager
 
   flink-taskmanager:
-    image: flink:1.20.1-scala_2.12-java17
+    image: flink:1.20.3-scala_2.12-java17
     container_name: flink-taskmanager
     depends_on:
       - flink-jobmanager
@@ -109,10 +109,32 @@ services:
       context: ./flink-detector
     container_name: flink-detector
     depends_on:
-      - kafka
-      - flink-jobmanager
-      - flink-taskmanager
+      kafka-init:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_started
+      flink-jobmanager:
+        condition: service_started
+      flink-taskmanager:
+        condition: service_started
     restart: "no"
+
+  alert-app:
+    build:
+      context: ./alert-app
+    container_name: alert-app
+    depends_on:
+      - kafka
+      - mongodb
+    ports:
+      - "8501:8501"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      KAFKA_TOPIC: alerts
+      KAFKA_GROUP_ID: alert-dashboard-consumer
+      MONGO_URI: mongodb://admin:admin123@mongodb:27017
+      MONGO_DB: anomaly_detection
+      MONGO_COLLECTION: alerts
 
 volumes:
   kafka-data:

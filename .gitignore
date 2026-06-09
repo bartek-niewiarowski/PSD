@@ -94,3 +94,5 @@ coverage/
 # =========================
 *.swp
 *.swo
+
+consumer/received_transactions.jsonl
