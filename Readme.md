@@ -1,14 +1,20 @@
-# System wykrywania anomalii w transakcjach kart płatniczych
-
-## Autorzy
-
-* Bartłomiej Niewiarowski
-* Krzysztof Fijałkowski
-* Rok akademicki: 2025/2026
-
+---
+title: Projekt PSD
+subtitle: System wykrywania anomalii w transakcjach kart płatniczych
+author:
+  - Bartłomiej Niewiarowski
+  - Krzysztof Fijałkowski
+date: 04.06.2026
+documentclass: article
+geometry:
+  - margin=1in
+fontenc: T1
+fontfamily: mlmodern
+fontsize: 11pt
+numbersections: true
 ---
 
-# 1. Cel projektu
+# Cel projektu
 
 Celem projektu było opracowanie systemu służącego do wykrywania anomalii w transakcjach realizowanych za pomocą kart płatniczych.
 
@@ -30,11 +36,11 @@ Projekt umożliwia:
 
 ---
 
-# 2. Założenia projektu
+# Założenia projektu
 
 Projekt został wykonany zgodnie z założeniami:
 
-## 2.1 Generowanie danych
+## Generowanie danych
 
 Symulator transakcji generuje dane dla 10 000 różnych kart płatniczych.
 
@@ -50,7 +56,7 @@ Każda transakcja zawiera:
 
 Dane są przesyłane w formacie JSON.
 
-## 2.2 Wykrywanie anomalii
+## Wykrywanie anomalii
 
 Detektor anomalii analizuje dane w trybie prawie rzeczywistym.
 
@@ -67,7 +73,7 @@ Detekcja opiera się na metodach statystycznych:
 * odchyleniu standardowym,
 * z-score.
 
-## 2.3 Pamięć tymczasowa
+## Pamięć tymczasowa
 
 Apache Flink wykorzystuje mechanizm state management.
 
@@ -80,16 +86,16 @@ Przechowywane są między innymi:
 
 ---
 
-# 3. Architektura rozwiązania
+# Architektura rozwiązania
 
-## 3.1 Schemat działania aplikacji
+## Schemat działania aplikacji
 ![Schemat architektury](./PSD_DIAGRAM.png)
 
 ---
 
-# 4. Opis komponentów systemu
+# Opis komponentów systemu
 
-## 4.1 Symulator transakcji
+## Symulator transakcji
 
 Symulator transakcji odpowiada za generowanie danych wejściowych.
 
@@ -124,7 +130,7 @@ Przykładowa wiadomość:
 
 ---
 
-## 4.2 Apache Kafka
+## Apache Kafka
 
 Apache Kafka pełni funkcję brokera wiadomości.
 
@@ -144,7 +150,7 @@ Kafka umożliwia:
 
 ---
 
-## 4.3 Testowy konsument Kafka
+## Testowy konsument Kafka
 
 Testowy konsument służy do analizy poprawności generowanych danych.
 
@@ -159,7 +165,7 @@ Komponent był wykorzystywany podczas testowania poprawności działania symulat
 
 ---
 
-## 4.4 Apache Flink — detektor anomalii
+## Apache Flink — detektor anomalii
 
 Detektor anomalii jest najważniejszym komponentem systemu.
 
@@ -230,7 +236,7 @@ Dzięki temu możliwe jest wykrywanie nietypowych zachowań dla konkretnej karty
 
 ---
 
-## 4.5 Aplikacja wizualizacyjna
+## Aplikacja wizualizacyjna
 
 Aplikacja wizualizacyjna odpowiada za prezentację alarmów.
 
@@ -253,7 +259,7 @@ Wyświetlane informacje:
 
 ---
 
-## 4.6 MongoDB
+## MongoDB
 
 MongoDB służy do przechowywania:
 
@@ -269,9 +275,9 @@ Baza danych umożliwia:
 
 ---
 
-# 5. Uruchomienie systemu
+# Uruchomienie systemu
 
-## 5.1 Wymagania
+## Wymagania
 
 Do uruchomienia projektu wymagane są:
 
@@ -284,7 +290,7 @@ Do uruchomienia projektu wymagane są:
 
 ---
 
-# 5.2 Budowanie aplikacji Java
+# Budowanie aplikacji Java
 
 W katalogu projektu należy wykonać:
 
@@ -300,7 +306,7 @@ target/
 
 ---
 
-# 5.3 Uruchomienie środowiska Docker
+# Uruchomienie środowiska Docker
 
 Uruchomienie wszystkich komponentów:
 
@@ -320,7 +326,7 @@ Zatrzymanie środowiska:
 docker compose down
 ```
 
-## 5.3.1 Adresy komponentów
+## Adresy komponentów
 
 Kafka:            localhost:9092
 Flink Dashboard:  http://localhost:8081
@@ -329,7 +335,7 @@ Alert Dashboard:  http://localhost:8501
 
 ---
 
-## 5.3.2 Synchronizacja zależności Python (uv)
+## Synchronizacja zależności Python (uv)
 
 W osobnych terminalach lub sekwencyjnie wykonaj (dla komponentów uruchamianych lokalnie poza Docker Compose):
 
@@ -344,7 +350,7 @@ cd consumer && uv sync
 ---
 
 
-# 5.4 Uruchomienie aplikacji wizualizacyjnej
+# Uruchomienie aplikacji wizualizacyjnej
 
 Domyślnie aplikacja Streamlit uruchamia się razem z całym środowiskiem przez Docker Compose:
 
@@ -372,7 +378,7 @@ http://localhost:8501
 
 ---
 
-# 5.5 Uruchomienie symulatora transakcji
+# Uruchomienie symulatora transakcji
 
 Przykładowe uruchomienie:
 
@@ -384,7 +390,7 @@ Symulator zaczyna wysyłać dane do topiku Kafka `transactions`.
 
 ---
 
-## 5.6 Uruchomienie testowego konsumenta Kafka
+## Uruchomienie testowego konsumenta Kafka
 
 Przykładowe uruchomienie:
 
@@ -398,7 +404,7 @@ Konsument odczytuje wiadomości z topiku `transactions`.
 
 
 
-# 6. Alerty w aktualnej implementacji
+# Alerty w aktualnej implementacji
 
 Poniżej znajduje się komplet alertów generowanych przez aktualny kod detektora (`AnomalyDetectorJob`):
 
@@ -433,7 +439,7 @@ Poniżej znajduje się komplet alertów generowanych przez aktualny kod detektor
 
 ---
 
-# 7. Podsumowanie
+# Podsumowanie
 
 W ramach projektu opracowano kompletny system wykrywania anomalii w transakcjach kart płatniczych.
 
@@ -448,10 +454,10 @@ System umożliwia:
 
 Projekt spełnia wymagania zadania i wykorzystuje nowoczesne technologie przetwarzania danych strumieniowych.
 
-# 8. Link do demo
+# Link do demo
 https://drive.google.com/file/d/1GBcvcP2kurKY2JwGBLP3mM4bLQFcMgYN/view?usp=sharing
 
-# 9. Testy end-to-end
+# Testy end-to-end
 
 W projekcie przygotowano testy end-to-end (katalog `tests/e2e/`), które na uruchomionym stacku Docker Compose wysyłają transakcje do Kafki, weryfikują generowanie alertów przez Flinka (przekroczenie limitu, anomalia kwotowa, nowa lokalizacja) oraz zapis alertów w MongoDB.
 
@@ -463,18 +469,17 @@ Aby je uruchomić należy:
 wynik jest następujący:
 ```bash
 tests git:(main) uv run pytest e2e -v           
-========================================================== test session starts ===========================================================
-platform linux -- Python 3.9.22, pytest-8.3.4, pluggy-1.6.0 -- /home/gambolkf/studia/mgr/psd_project/tests/.venv/bin/python
+======================== test session starts ========================
 cachedir: .pytest_cache
 rootdir: /home/gambolkf/studia/mgr/psd_project/tests
 configfile: pyproject.toml
 plugins: timeout-2.3.1
 collected 4 items                                                                                                                        
 
-e2e/test_mongo_persist.py::test_alert_persisted_to_mongo PASSED                                                                    [ 25%]
-e2e/test_pipeline.py::test_limit_exceeded_detected PASSED                                                                          [ 50%]
-e2e/test_pipeline.py::test_statistical_amount_anomaly_detected PASSED                                                              [ 75%]
-e2e/test_pipeline.py::test_new_location_detected PASSED                                                                            [100%]
+e2e/test_mongo_persist.py::test_alert_persisted_to_mongo PASSED             [ 25%]
+e2e/test_pipeline.py::test_limit_exceeded_detected PASSED                   [ 50%]
+e2e/test_pipeline.py::test_statistical_amount_anomaly_detected PASSED       [ 75%]
+e2e/test_pipeline.py::test_new_location_detected PASSED                     [100%]
 
-===================================================== 4 passed in 242.03s (0:04:02) ======================================================
+======================== 4 passed in 242.03s (0:04:02) ========================
 ```
